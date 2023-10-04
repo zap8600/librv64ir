@@ -76,6 +76,8 @@ impl Uart {
         let mut byte = [0; 1];
         let cloned_uart = uart.clone();
         let cloned_interrupting = interrupting.clone();
+        /* no need for thread, this lib shouldn't need to read stdin for uart bc my emu is already using stdin for its uart
+        also this method of input in rust is worse than mine soooooo
         let _uart_thread_for_read = thread::spawn(move || loop {
             match io::stdin().read(&mut byte) {
                 Ok(_) => {
@@ -95,6 +97,7 @@ impl Uart {
                 }
             }
         });
+        */
         Self { uart, interrupting }
     }
 
@@ -121,8 +124,10 @@ impl Uart {
         let mut uart = uart.lock().expect("failed to get an UART object");
         match addr {
             UART_THR => {
+                /* no need, we dont want douple output on stdout
                 print!("{}", value as u8 as char);
                 io::stdout().flush().expect("failed to flush stdout");
+                */
             }
             _ => {
                 uart[(addr - UART_BASE) as usize] = value as u8;
