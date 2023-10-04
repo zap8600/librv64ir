@@ -12,9 +12,8 @@ use crate::trap::*;
 
 use std::ffi::CStr;
 use std::os::raw::c_char;
+use std::os::raw::c_void;
 use std::fs::File;
-
-let mut rcpu;
 
 #[repr(C)]
 pub struct CpuState {
@@ -25,18 +24,18 @@ pub struct CpuState {
 }
 
 impl CpuState {
-    pub fn new(cpu: &mut Cpu, is_error: bool) -> Self {
+    pub fn new(cpu: &mut Cpu) -> Self {
         Self {
             regs: cpu.regs,
             pc: cpu.pc,
             csrs: cpu.csrs,
-            error: is_error,
+            error: cpu.error,
         }
     }
 }
 
 #[no_mangle]
-pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) {
+pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) -> *mut c_void {
     let file_path = unsafe { CStr::from_ptr(cfile) };
     let disk_path = unsafe { CStr::from_ptr(cdisk) };
 
@@ -48,52 +47,52 @@ pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) {
     let mut file = File::open(&disk_path);
     file.read_to_end(&mut disk_image);
 
-    rcpu = Cpu::new(binary, disk_image);
+    let mut cpu = Cpu::new(binary, disk_image);
+
+    std::mem::transmute::<&mut Cpu, *mut c_void>(&mut cpu)
 }
 
 #[no_mangle]
-pub extern fn rv64ir_cycle() -> Box<CpuState> {
-    let mut has_error;
+pub extern fn rv64ir_cycle(cpu: *mut c_void) -> *mut c_void {
+    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu) }
 
-    let inst = match rcpu.fetch() {
+    let inst = match cpu.fetch() {
         Ok(inst) => inst,
         Err(exception) => {
-            exception.take_trap(&mut rcpu);
+            exception.take_trap(&mut cpu);
             if exception.is_fatal() {
-                has_error = true;
+                cpu.error = true;
             }
         }
     };
 
     rcpu.pc += 4;
 
-    if !has_error {
-        match rcpu.execute(inst) {
+    if !cpu.error {
+        match cpu.execute(inst) {
             Ok(_) => {}
             Err(exception) => {
-                exception.take_trap(&mut rcpu);
+                exception.take_trap(&mut cpu);
                 if exception.is_fatal() {
-                    has_error = true;
+                    cpu.error = true;
                 }
             }
         }
     }
 
-    if !has_error {
-        match rcpu.check_pending_interrupt() {
-            Some(interrupt) => interrupt.take_trap(&mut rcpu),
+    if !cpu.error {
+        match cpu.check_pending_interrupt() {
+            Some(interrupt) => interrupt.take_trap(&mut cpu),
             None => {}
         }
     }
 
-    let cpu_state = CpuState::new(
-        &rcpu,
-        if has_error {
-            true
-        } else {
-            false
-        },
-    );
+    std::mem::transmute::<&mut Cpu, *mut c_void>(&mut cpu)
+}
 
-    Box::new(cpu_state)
+#[no_mangle]
+pub extern fn rv64ir_get_state(cpu: *mut c_void) -> Box<CpuState> {
+    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu) };
+    let state = CpuState::new(&mut cpu);
+    Box::new(state)
 }

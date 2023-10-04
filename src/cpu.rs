@@ -96,6 +96,8 @@ pub struct Cpu {
     pub enable_paging: bool,
     /// physical page number (PPN) × PAGE_SIZE (4096).
     pub page_table: u64,
+    /// error, for lib
+    pub error: bool,
 }
 
 impl Cpu {
@@ -114,6 +116,7 @@ impl Cpu {
             csrs: [0; 4096],
             enable_paging: false,
             page_table: 0,
+            error: false,
         }
     }
 
