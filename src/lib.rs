@@ -53,8 +53,8 @@ pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) -> *mut c_
 }
 
 #[no_mangle]
-pub extern fn rv64ir_cycle(cpu: *mut c_void) -> *mut c_void {
-    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu) }
+pub extern fn rv64ir_cycle(cpu_ptr: *mut c_void) -> *mut c_void {
+    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu_ptr) }
 
     let inst = match cpu.fetch() {
         Ok(inst) => inst,
@@ -91,8 +91,8 @@ pub extern fn rv64ir_cycle(cpu: *mut c_void) -> *mut c_void {
 }
 
 #[no_mangle]
-pub extern fn rv64ir_get_state(cpu: *mut c_void) -> Box<CpuState> {
-    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu) };
+pub extern fn rv64ir_get_state(cpu_ptr: *mut c_void) -> Box<CpuState> {
+    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu_ptr) };
     let state = CpuState::new(&mut cpu);
     Box::new(state)
 }
