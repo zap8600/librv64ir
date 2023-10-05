@@ -7,7 +7,7 @@ use crate::trap::*;
 pub const DRAM_SIZE: u64 = 1024 * 1024 * 128;
 
 /// The dynamic random access dram (DRAM).
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Dram {
     pub dram: Vec<u8>,
 }

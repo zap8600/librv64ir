@@ -16,6 +16,7 @@ pub const PLIC_SPRIORITY: u64 = PLIC_BASE + 0x201000;
 pub const PLIC_SCLAIM: u64 = PLIC_BASE + 0x201004;
 
 /// The platform-level-interrupt controller (PLIC).
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Plic {
     pending: u64,
     senable: u64,

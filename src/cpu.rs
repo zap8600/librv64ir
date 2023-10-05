@@ -59,7 +59,7 @@ pub const SIP: usize = 0x144;
 pub const SATP: usize = 0x180;
 
 /// The privileged mode.
-#[derive(Debug, PartialEq, PartialOrd, Eq, Copy, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Eq, Copy, Clone)]
 pub enum Mode {
     User = 0b00,
     Supervisor = 0b01,
@@ -68,7 +68,7 @@ pub enum Mode {
 
 /// Access type that is used in the virtual address translation process. It decides which exception
 /// should raises (InstructionPageFault, LoadPageFault or StoreAMOPageFault).
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
 pub enum AccessType {
     /// Raises the exception InstructionPageFault. It is used for an instruction fetch.
     Instruction,
@@ -80,6 +80,7 @@ pub enum AccessType {
 
 /// The `Cpu` struct that contains registers, a program coutner, system bus that connects
 /// peripheral devices, and control and status registers.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Cpu {
     /// 32 64-bit integer registers.
     pub regs: [u64; 32],

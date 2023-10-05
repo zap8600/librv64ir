@@ -45,6 +45,7 @@ pub const VIRTIO_QUEUE_NOTIFY: u64 = VIRTIO_BASE + 0x050;
 pub const VIRTIO_STATUS: u64 = VIRTIO_BASE + 0x070;
 
 /// Paravirtualized drivers for IO virtualization.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Virtio {
     id: u64,
     driver_features: u32,

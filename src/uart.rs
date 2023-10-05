@@ -38,6 +38,7 @@ pub const UART_LSR_RX: u8 = 1;
 /// The transmitter (TX) bit.
 pub const UART_LSR_TX: u8 = 1 << 5;
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Uart {
     /// Pair of an array for UART buffer and a conditional variable.
     uart: Arc<(Mutex<[u8; UART_SIZE as usize]>, Condvar)>,

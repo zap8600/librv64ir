@@ -15,27 +15,10 @@ use std::os::raw::c_char;
 use std::os::raw::c_void;
 use std::fs::File;
 
-#[repr(C)]
-pub struct CpuState {
-    pub regs: [u64; 32],
-    pub pc: u64,
-    pub csrs: [u64; 4096],
-    pub error: bool,
-}
-
-impl CpuState {
-    pub fn new(cpu: &mut Cpu) -> Self {
-        Self {
-            regs: cpu.regs,
-            pc: cpu.pc,
-            csrs: cpu.csrs,
-            error: cpu.error,
-        }
-    }
-}
+use serde::{Serialize, Deserialize};
 
 #[no_mangle]
-pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) -> *mut c_void {
+pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) -> *const c_char {
     let file_path = unsafe { CStr::from_ptr(cfile) };
     let disk_path = unsafe { CStr::from_ptr(cdisk) };
 
@@ -49,12 +32,16 @@ pub extern fn rv64ir_init(cfile: *const c_char, cdisk: *const c_char) -> *mut c_
 
     let mut cpu = Cpu::new(binary, disk_image);
 
-    std::mem::transmute::<&mut Cpu, *mut c_void>(&mut cpu)
+    let serialized = serde_json::to_string(&cpu).unwrap();
+    let ccpu = CStr::new(serialized).expect("Failed to serialize Cpu struct!");
+    unsafe { ccpu.as_ptr() }
 }
 
 #[no_mangle]
-pub extern fn rv64ir_cycle(cpu_ptr: *mut c_void) -> *mut c_void {
-    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu_ptr) };
+pub extern fn rv64ir_cycle(cstate: *const c_char) -> *const c_char {
+    let ccpu = unsafe { CStr::from_ptr(cstate) };
+
+    let mut cpu: mut Cpu = Point = serde_json::from_str(&ccpu).unwrap();
 
     let inst = match cpu.fetch() {
         Ok(inst) => inst,
@@ -66,7 +53,7 @@ pub extern fn rv64ir_cycle(cpu_ptr: *mut c_void) -> *mut c_void {
         }
     };
 
-    rcpu.pc += 4;
+    cpu.pc += 4;
 
     if !cpu.error {
         match cpu.execute(inst) {
@@ -87,12 +74,12 @@ pub extern fn rv64ir_cycle(cpu_ptr: *mut c_void) -> *mut c_void {
         }
     }
 
-    std::mem::transmute::<&mut Cpu, *mut c_void>(&mut cpu)
-}
+    cpu.pc -= 4;
 
-#[no_mangle]
-pub extern fn rv64ir_get_state(cpu_ptr: *mut c_void) -> Box<CpuState> {
-    let mut cpu = unsafe { std::mem::transmute<*mut c_void, &mut Cpu>(cpu_ptr) };
-    let state = CpuState::new(&mut cpu);
-    Box::new(state)
+    let serialized = serde_json::to_string(&cpu).unwrap();
+    let ccpu = CStr::new(serialized).expect("Failed to serialize Cpu struct!");
+
+    cpu.pc += 4;
+
+    unsafe { ccpu.as_ptr() }
 }

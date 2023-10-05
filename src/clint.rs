@@ -13,6 +13,7 @@ pub const CLINT_MTIMECMP: u64 = CLINT_BASE + 0x4000;
 pub const CLINT_MTIME: u64 = CLINT_BASE + 0xbff8;
 
 /// The core-local interruptor (CLINT).
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Clint {
     mtime: u64,
     mtimecmp: u64,

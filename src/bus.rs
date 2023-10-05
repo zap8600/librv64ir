@@ -40,6 +40,7 @@ pub trait Device {
 }
 
 /// The system bus.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Bus {
     clint: Clint,
     plic: Plic,

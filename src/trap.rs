@@ -6,7 +6,7 @@ use crate::cpu::*;
 
 /// All kinds of exceptions, an unusual condition occurring at run
 /// time associated with an instruction in the current hardware thread.
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Exception {
     InstructionAddressMisaligned,
     InstructionAccessFault,
@@ -27,7 +27,7 @@ pub enum Exception {
 /// All kinds of interrupts, an external asynchronous event that may
 /// cause a hardware thread to experience an unexpected transfer of
 /// control.
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Interrupt {
     UserSoftwareInterrupt,
     SupervisorSoftwareInterrupt,
